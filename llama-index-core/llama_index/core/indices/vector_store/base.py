@@ -4,7 +4,7 @@ Base vector store index.
 An index that is built on top of an existing vector store.
 
 """
-
+from tqdm import tqdm
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional, Sequence
@@ -233,8 +233,10 @@ class VectorStoreIndex(BaseIndex[IndexDict]):
         """Add document to index."""
         if not nodes:
             return
-
-        for nodes_batch in iter_batch(nodes, self._insert_batch_size):
+        batch_count = len(nodes) // self._insert_batch_size
+        if len(nodes) % self._insert_batch_size > 0:
+            batch_count += 1
+        for nodes_batch in tqdm(iter_batch(nodes, self._insert_batch_size), total=batch_count):
             nodes_batch = self._get_node_with_embedding(nodes_batch, show_progress)
             new_ids = self._vector_store.add(nodes_batch, **insert_kwargs)
 
